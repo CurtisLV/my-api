@@ -4,8 +4,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var connectionString = builder.Configuration["REDIS_CONNECTION"] ?? "redis:6379";
-    return ConnectionMultiplexer.Connect(connectionString);
+    // Added abortConnect=false so it does not crash on startup if offline
+    var connectionString = builder.Configuration["REDIS_CONNECTION"] ?? "redis:6379,abortConnect=false";
+    try
+    {
+        return ConnectionMultiplexer.Connect(connectionString);
+    }
+    catch
+    {
+        return null!; // Handle null gracefully in endpoints
+    }
 });
 
 var app = builder.Build();
@@ -26,10 +34,21 @@ var summaries = new[]
 // Main endpoint - increments visit counter
 app.MapGet("/weatherforecast", async (IConnectionMultiplexer redis) =>
 {
-    var db = redis.GetDatabase();
+    long totalVisits = 0;
 
-    // Increment counter every time this endpoint is called
-    var totalVisits = await db.StringIncrementAsync("visits:total");
+    try
+    {
+        // Only try to use Redis if it is initialized and connected
+        if (redis != null && redis.IsConnected)
+        {
+            var db = redis.GetDatabase();
+            totalVisits = await db.StringIncrementAsync("visits:total");
+        }
+    }
+    catch
+    {
+        // Redis is down; ignore the error and keep totalVisits at 0
+    }
 
     var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
@@ -43,17 +62,29 @@ app.MapGet("/weatherforecast", async (IConnectionMultiplexer redis) =>
     return new
     {
         forecast,
-        totalVisits   // optional: you can return the count too
+        totalVisits
     };
 });
 
 // Just returns current count (does NOT increment)
 app.MapGet("/visits", async (IConnectionMultiplexer redis) =>
 {
-    var db = redis.GetDatabase();
-    var totalVisits = await db.StringGetAsync("visits:total");
+    long count = 0;
 
-    long count = totalVisits.HasValue ? (long)totalVisits : 0;
+    try
+    {
+        if (redis != null && redis.IsConnected)
+        {
+            var db = redis.GetDatabase();
+            var totalVisits = await db.StringGetAsync("visits:total");
+            count = totalVisits.HasValue ? (long)totalVisits : 0;
+        }
+    }
+    catch
+    {
+        // Ignore
+    }
+
     return Results.Ok(new
     {
         totalVisits = count
