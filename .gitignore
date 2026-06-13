@@ -1,1 +1,31 @@
 .vs/
+.vscode/
+
+# Build results
+bin/
+obj/
+**/bin/
+**/obj/
+artifacts/
+publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.DotSettings.user
+
+# Visual Studio workspace files
+*.sln.docstates
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+
+# Logs, DB, OS files
+*.log
+*.sqlite
+*.db
+.DS_Store
+Thumbs.db
