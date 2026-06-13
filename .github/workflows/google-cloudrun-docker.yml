@@ -41,3 +41,14 @@ jobs:
           DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/${{ env.IMAGE }}:${{ github.sha }}"
           docker build --tag "$DOCKER_TAG" .
           docker push "$DOCKER_TAG"
+     
+      - id: deploy
+        name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Show output
+        run: echo ${{ steps.deploy.outputs.url }}
