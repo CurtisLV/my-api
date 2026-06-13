@@ -40,6 +40,7 @@ jobs:
           registry: ${{ env.REGION }}-docker.pkg.dev
 
       - name: Build and Push Container
-        run: |-
+        run: |
           DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/${{ env.IMAGE }}:${{ github.sha }}"
-          docker build --tag
+          docker build --tag "$DOCKER_TAG" .
+          docker push "$DOCKER_TAG"
