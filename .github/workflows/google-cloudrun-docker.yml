@@ -32,6 +32,11 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
 
+      - name: Debug auth
+        run: |
+          echo "Token type check:"
+          curl -s "https://oauth2.googleapis.com/tokeninfo?access_token=${{ steps.auth.outputs.auth_token }}" | python3 -m json.tool
+
       - name: Docker Auth
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
