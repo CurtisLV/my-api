@@ -33,6 +33,7 @@ on:
   push:
     branches:
       - '"main"'
+workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.PROJECT_ID }} # TODO: update to your Google Cloud project ID
